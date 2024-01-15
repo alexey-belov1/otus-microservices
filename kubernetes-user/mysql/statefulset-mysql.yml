@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ss-mysql
+spec:
+  selector:
+    matchLabels:
+      env: label-mysql
+  template:
+    metadata:
+      labels:
+        env: label-mysql
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8.2.0
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: secret-mysql
+                  key: db-user
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secret-mysql
+                  key: db-password
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secret-mysql
+                  key: db-root-password
+            - name: MYSQL_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: config-mysql
+                  key: db-name
+          volumeMounts:
+            - name: persistent-storage-mysql
+              mountPath: /var/lib/mysql
+  volumeClaimTemplates:
+    - metadata:
+        name: persistent-storage-mysql
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        storageClassName: local-storage
+        resources:
+          requests:
+            storage: 1Gi

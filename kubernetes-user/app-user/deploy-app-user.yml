@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dp-app-user
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      env: label-app-user
+  template:
+    metadata:
+      labels:
+        env: label-app-user
+    spec:
+      containers:
+        - name: app-user
+          image: abelov1/otus-microservices-user:v1.2
+          ports:
+          - containerPort: 8000
+          env:
+            - name: DATABASE_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: config-mysql
+                  key: db-host
+            - name: DATABASE_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: config-mysql
+                  key: db-port
+            - name: DATABASE_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: config-mysql
+                  key: db-name
+            - name: DATABASE_USER
+              valueFrom:
+                secretKeyRef:
+                  name: secret-mysql
+                  key: db-user
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secret-mysql
+                  key: db-root-password
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            successThreshold: 1
+            failureThreshold: 3
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            successThreshold: 1
+            failureThreshold: 10
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          volumeMounts:
+            - name: config
+              mountPath: /config
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: config-app-user
+            items:
+              - key: application.properties
+                path: application.properties
