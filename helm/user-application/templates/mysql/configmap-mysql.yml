@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-mysql-config
+data:
+  db-host: "{{ .Release.Name }}-mysql-svc"
+  db-port: "{{ .Values.service.mysql.port }}"
+  db-name: "{{ .Values.db.name }}"

@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Release.Name }}-mysql-ss
+spec:
+  selector:
+    matchLabels:
+      env: {{ .Release.Name }}-mysql-label
+  template:
+    metadata:
+      labels:
+        env: {{ .Release.Name }}-mysql-label
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: {{ .Values.image.mysql.tag }}:{{ .Values.image.mysql.version }}
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-mysql-secret
+                  key: db-user
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-mysql-secret
+                  key: db-password
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-mysql-secret
+                  key: db-root-password
+            - name: MYSQL_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Release.Name }}-mysql-config
+                  key: db-name
+          livenessProbe:
+            exec:
+              command:
+                - bash
+                - "-c"
+                - |
+                  mysqladmin -u$MYSQL_USER -p$MYSQL_PASSWORD ping
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            exec:
+              command:
+                - bash
+                - "-c"
+                - |
+                  mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -h 127.0.0.1 -e 'SELECT 1'
+            initialDelaySeconds: 10
+            periodSeconds: 3
+            timeoutSeconds: 2
+          volumeMounts:
+            - name: {{ .Release.Name }}-mysql-persistent-storage
+              mountPath: /var/lib/mysql
+  volumeClaimTemplates:
+    - metadata:
+        name: {{ .Release.Name }}-mysql-persistent-storage
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        storageClassName: {{ .Release.Name }}-local-storage
+        resources:
+          requests:
+            storage: 1Gi

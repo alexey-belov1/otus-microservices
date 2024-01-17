@@ -1,14 +1,17 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: liquibase-runner-job
+  name: {{ .Release.Name }}-liquibase-runner-job
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": "1"
 spec:
   backoffLimit: 0
   template:
     spec:
       containers:
-        - image: 'liquibase/liquibase:4.25'
-          name: liquibase
+        - name: {{ .Chart.Name }}
+          image: {{ .Values.image.liquibase.repository }}/{{ .Values.image.liquibase.tag }}:{{ .Values.image.liquibase.version }}
           command: [ "/bin/sh", "-c" ]
           args:
             - |
@@ -24,27 +27,27 @@ spec:
             - name: DATABASE_HOST
               valueFrom:
                 configMapKeyRef:
-                  name: mysql-config
+                  name: {{ .Release.Name }}-mysql-config
                   key: db-host
             - name: DATABASE_PORT
               valueFrom:
                 configMapKeyRef:
-                  name: mysql-config
+                  name: {{ .Release.Name }}-mysql-config
                   key: db-port
             - name: DATABASE_USER
               valueFrom:
                 secretKeyRef:
-                  name: mysql-secret
+                  name: {{ .Release.Name }}-mysql-secret
                   key: db-user
             - name: DATABASE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: mysql-secret
+                  name: {{ .Release.Name }}-mysql-secret
                   key: db-password
             - name: DATABASE_NAME
               valueFrom:
                 configMapKeyRef:
-                  name: mysql-config
+                  name: {{ .Release.Name }}-mysql-config
                   key: db-name
           volumeMounts:
             - mountPath: /workspace
@@ -54,10 +57,10 @@ spec:
           args: ["git clone --single-branch --branch $(BRANCH) $(REPO) /workspace"]
           env:
             - name: BRANCH
-              value: master
+              value: {{ .Values.initContainer.git.branch }}
             - name: REPO
-              value: 'https://github.com/alexey-belov1/otus-microservices'
-          image: alpine/git
+              value: {{ .Values.initContainer.git.repo }}
+          image: {{ .Values.image.git.repository }}/{{ .Values.image.git.tag }}
           name: git
           volumeMounts:
             - mountPath: /workspace

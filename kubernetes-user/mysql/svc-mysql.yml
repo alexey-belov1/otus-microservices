@@ -4,7 +4,7 @@ metadata:
   name: mysql
 spec:
   selector:
-    env: label-mysql
+    env: mysql-label
   ports:
     - port: 3306
   type: NodePort

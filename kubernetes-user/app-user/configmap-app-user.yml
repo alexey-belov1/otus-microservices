@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: config-app-user
+  name: app-user-config
 data:
   application.properties: |
     server.port: 8000

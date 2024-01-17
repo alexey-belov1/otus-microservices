@@ -1,52 +1,55 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: app-user-dp
+  name: {{ .Release.Name }}-app-user-dp
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": "2"
 spec:
-  replicas: 2
+  replicas: {{ .Values.deploy.app.replicaCount }}
   selector:
     matchLabels:
-      env: app-user-label
+      env: {{ .Release.Name }}-app-user-label
   template:
     metadata:
       labels:
-        env: app-user-label
+        env: {{ .Release.Name }}-app-user-label
     spec:
       containers:
-        - name: app-user
-          image: abelov1/otus-microservices-user:v1.2
+        - name: {{ .Chart.Name }}
+          image: {{ .Values.image.app.repository }}/{{ .Values.image.app.tag }}:{{ .Values.image.app.version }}
           ports:
-          - containerPort: 8000
+          - containerPort: {{ .Values.service.app.port }}
           env:
             - name: DATABASE_HOST
               valueFrom:
                 configMapKeyRef:
-                  name: mysql-config
+                  name: {{ .Release.Name }}-mysql-config
                   key: db-host
             - name: DATABASE_PORT
               valueFrom:
                 configMapKeyRef:
-                  name: mysql-config
+                  name: {{ .Release.Name }}-mysql-config
                   key: db-port
             - name: DATABASE_NAME
               valueFrom:
                 configMapKeyRef:
-                  name: mysql-config
+                  name: {{ .Release.Name }}-mysql-config
                   key: db-name
             - name: DATABASE_USER
               valueFrom:
                 secretKeyRef:
-                  name: mysql-secret
+                  name: {{ .Release.Name }}-mysql-secret
                   key: db-user
             - name: DATABASE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: mysql-secret
+                  name: {{ .Release.Name }}-mysql-secret
                   key: db-root-password
           readinessProbe:
             httpGet:
               path: /health
-              port: 8000
+              port: {{ .Values.service.app.port }}
             successThreshold: 1
             failureThreshold: 3
             initialDelaySeconds: 10
@@ -54,7 +57,7 @@ spec:
           livenessProbe:
             httpGet:
               path: /health
-              port: 8000
+              port: {{ .Values.service.app.port }}
             successThreshold: 1
             failureThreshold: 10
             initialDelaySeconds: 10
@@ -66,7 +69,7 @@ spec:
       volumes:
         - name: config
           configMap:
-            name: app-user-config
+            name: {{ .Release.Name }}-app-user-config
             items:
               - key: application.properties
                 path: application.properties

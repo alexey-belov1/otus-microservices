@@ -1,14 +1,14 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: mysql-pv
+  name: {{ .Release.Name }}-mysql-pv
 spec:
-  storageClassName: local-storage
+  storageClassName: {{ .Release.Name }}-local-storage
   capacity:
     storage: 1Gi
   accessModes:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
   hostPath:
-    path: "/mnt/data"
-    type: DirectoryOrCreate
+    path: {{ .Values.pv.mysql.path }}
+    type: {{ .Values.pv.mysql.type }}

@@ -1,0 +1,57 @@
+image:
+  app:
+    repository: abelov1
+    tag: otus-microservices-user
+    version: v1.2
+  liquibase:
+    repository: liquibase
+    tag: liquibase
+    version: 4.25
+  mysql:
+    tag: mysql
+    version: 8.2.0
+  git:
+    repository: alpine
+    tag: git
+
+deploy:
+  app:
+    replicaCount: 2
+
+service:
+  app:
+    type: ClusterIP
+    port: 8000
+  mysql:
+    type: NodePort
+    port: 3306
+
+db:
+  name: otus_microservices
+
+pv:
+  mysql:
+    path: /mnt/data
+    type: DirectoryOrCreate
+
+initContainer:
+  git:
+    branch: master
+    repo: https://github.com/alexey-belov1/otus-microservices
+
+config:
+  app:
+    server.port: 8000
+    spring.datasource.url: jdbc:mysql://${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}?createDatabaseIfNotExist=true&serverTimezone=Europe/Moscow&cacheDefaultTimezone=false
+    spring.datasource.username: ${DATABASE_USER}
+    spring.datasource.password: ${DATABASE_PASSWORD}
+    spring.datasource.driver-class-name: com.mysql.cj.jdbc.Driver
+    management.endpoints.web.base-path: /
+    management.endpoints.web.path-mapping.health: health
+    spring.jpa.hibernate.ddl-auto: validate
+    spring.jpa.show-sql: false
+
+ingress:
+  app:
+    host: arch.homework
+    path: /otusapp/abelov/(.*)

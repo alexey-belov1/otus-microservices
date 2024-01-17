@@ -1,15 +1,15 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: ss-mysql
+  name: mysql-ss
 spec:
   selector:
     matchLabels:
-      env: label-mysql
+      env: mysql-label
   template:
     metadata:
       labels:
-        env: label-mysql
+        env: mysql-label
     spec:
       containers:
         - name: mysql
@@ -20,29 +20,29 @@ spec:
             - name: MYSQL_USER
               valueFrom:
                 secretKeyRef:
-                  name: secret-mysql
+                  name: mysql-secret
                   key: db-user
             - name: MYSQL_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: secret-mysql
+                  name: mysql-secret
                   key: db-password
             - name: MYSQL_ROOT_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: secret-mysql
+                  name: mysql-secret
                   key: db-root-password
             - name: MYSQL_DATABASE
               valueFrom:
                 configMapKeyRef:
-                  name: config-mysql
+                  name: mysql-config
                   key: db-name
           volumeMounts:
-            - name: persistent-storage-mysql
+            - name: mysql-persistent-storage
               mountPath: /var/lib/mysql
   volumeClaimTemplates:
     - metadata:
-        name: persistent-storage-mysql
+        name: mysql-persistent-storage
       spec:
         accessModes:
         - ReadWriteOnce
